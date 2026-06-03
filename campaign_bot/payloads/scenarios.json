@@ -1,0 +1,57 @@
+[
+  {
+    "id": "happy-path",
+    "title": "Happy path",
+    "subtitle": "Benign control — Alex Morgan",
+    "diagram_label": null,
+    "owasp": [],
+    "segment_id": "high-value-repeat",
+    "customer_id": "cust-101",
+    "brief_file": "happy-path-brief.txt",
+    "instructor_note": "Shows normal flow; expand Prompt sent to model to show one concatenated string."
+  },
+  {
+    "id": "direct-injection",
+    "title": "Direct injection",
+    "subtitle": "LLM01 — attacker text in marketer brief",
+    "diagram_label": "①",
+    "owasp": ["LLM01"],
+    "segment_id": "high-value-repeat",
+    "customer_id": "cust-101",
+    "brief_file": "direct-injection-brief.txt",
+    "instructor_note": "Same customer as happy path; only the brief changes. Stub leaks system/segment text on keyword match."
+  },
+  {
+    "id": "indirect-jordan",
+    "title": "Indirect injection (Jordan Lee)",
+    "subtitle": "LLM01 — payload in CRM notes",
+    "diagram_label": "②",
+    "owasp": ["LLM01"],
+    "segment_id": "high-value-repeat",
+    "customer_id": "cust-102",
+    "brief_file": "happy-path-brief.txt",
+    "instructor_note": "Reload happy-path brief; planted [SYSTEM:…] note on Jordan Lee. Stub returns PWNED."
+  },
+  {
+    "id": "indirect-casey",
+    "title": "Indirect injection (Casey Nguyen)",
+    "subtitle": "LLM01 — hidden instruction in win-back segment",
+    "diagram_label": "②",
+    "owasp": ["LLM01"],
+    "segment_id": "win-back-lapsed",
+    "customer_id": "cust-202",
+    "brief_file": "happy-path-brief.txt",
+    "instructor_note": "Win-back segment; benign brief but note forces odd sign-off (stub)."
+  },
+  {
+    "id": "output-handling",
+    "title": "Improper output handling",
+    "subtitle": "LLM05 — HTML rendered via innerHTML",
+    "diagram_label": "③",
+    "owasp": ["LLM05"],
+    "segment_id": "high-value-repeat",
+    "customer_id": "cust-101",
+    "brief_file": "output-handling-brief.txt",
+    "instructor_note": "Stub uses img onerror (script tags do not run via innerHTML). Live Claude may need rehearsing."
+  }
+]

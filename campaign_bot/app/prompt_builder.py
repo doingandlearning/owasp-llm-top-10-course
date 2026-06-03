@@ -4,8 +4,20 @@ from app.config import settings
 from app.models import Customer, Segment
 
 
+_PROMPT_FILES = {
+    "lab": "system-lab.txt",
+    "hardened": "system-hardened.txt",
+}
+
+
 def load_system_prompt() -> str:
-    path: Path = settings.prompts_dir / "system.txt"
+    style = settings.normalized_system_prompt_style()
+    filename = _PROMPT_FILES.get(style)
+    if not filename:
+        raise ValueError(
+            f"Unknown SYSTEM_PROMPT_STYLE '{style}'. Use: {', '.join(_PROMPT_FILES)}"
+        )
+    path: Path = settings.prompts_dir / filename
     return path.read_text(encoding="utf-8").strip()
 
 

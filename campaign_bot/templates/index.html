@@ -8,7 +8,10 @@
   </head>
   <body>
     <div class="banner">
-      Intentionally vulnerable lab app — localhost only. Do not deploy to production.
+      Intentionally vulnerable lab app — localhost only.
+      <a href="https://genai.owasp.org/llmrisk/llm01-prompt-injection/" target="_blank" rel="noopener">LLM01</a>
+      ·
+      <a href="https://genai.owasp.org/llmrisk/llm05-improper-output-handling/" target="_blank" rel="noopener">LLM05</a>
     </div>
 
     <div class="wrap">
@@ -16,129 +19,230 @@
         <h1>CampaignBot</h1>
         <p>
           Draft campaign emails from segment data and a marketer brief.
-          <span class="badge">LLM_MODE={{ llm_mode }}</span>
+          <span class="badge badge-{{ llm_mode }}" id="mode-badge">LLM_MODE={{ llm_mode }}</span>
+          <span class="badge badge-prompt">prompt={{ system_prompt_style }}</span>
         </p>
       </header>
 
-      <form id="campaign-form">
-        <section class="zone zone-trusted" aria-labelledby="trusted-heading">
-          <p class="zone-label" id="trusted-heading">Trusted zone</p>
+      <p class="config-warning hidden" id="config-warning" role="alert"></p>
 
-          <div class="field">
-            <label for="segment">Segment</label>
-            <select id="segment" name="segment_id" required>
-              <option value="">Select a segment…</option>
-              {% for seg in segments %}
-              <option
-                value="{{ seg.id }}"
-                data-name="{{ seg.name }}"
-                data-tags="{{ seg.tags | join(', ') }}"
-                data-history="{{ seg.purchase_history_summary }}"
+      <div class="layout">
+        <aside class="arch-panel" aria-label="Architecture diagram">
+          <h2 class="arch-title">Architecture</h2>
+          <p class="arch-caption">Matches <code>ometria.excalidraw</code> — CampaignBot frame</p>
+
+          <div class="arch-zone arch-zone-trusted">
+            <span class="arch-zone-label">Trusted zone</span>
+            <div class="arch-node">System prompt</div>
+            <div class="arch-node">Segment data</div>
+            <div class="arch-node arch-node-builder">Prompt builder</div>
+            <p class="arch-node-hint">Concatenates all inputs</p>
+          </div>
+
+          <div class="arch-connector">↓ feeds untrusted text into same string</div>
+
+          <div class="arch-zone arch-zone-untrusted">
+            <span class="arch-zone-label">Untrusted zone</span>
+            <div class="arch-node arch-node-untrusted">Marketer brief</div>
+            <div class="arch-node arch-node-untrusted">Customer records · notes</div>
+          </div>
+
+          <div class="arch-node arch-node-llm">LLM call</div>
+          <p class="arch-node-hint">Sees everything as one string</p>
+
+          <div class="arch-node arch-node-pipeline">Output handler</div>
+          <p class="arch-node-hint">Returns raw text to UI</p>
+
+          <div class="arch-node arch-node-browser">Browser preview</div>
+
+          <ul class="arch-risks">
+            <li><strong>①</strong> Direct injection — marketer brief</li>
+            <li><strong>②</strong> Indirect injection — CRM notes</li>
+            <li><strong>③</strong> Output not sanitised — LLM05 / XSS</li>
+          </ul>
+        </aside>
+
+        <div class="main-col">
+          <section class="demo-panel" aria-labelledby="demo-heading">
+            <h2 id="demo-heading">Instructor demo scenarios</h2>
+            <p class="demo-intro">
+              One-click load from <code>payloads/</code> — see <code>docs/PAYLOADS.md</code>.
+            </p>
+            <div class="demo-grid" id="demo-grid">
+              {% for s in demo_scenarios %}
+              <button
+                type="button"
+                class="demo-card"
+                data-scenario-id="{{ s.id }}"
               >
-                {{ seg.name }}
-              </option>
+                {% if s.diagram_label %}
+                <span class="demo-num">{{ s.diagram_label }}</span>
+                {% endif %}
+                <span class="demo-card-title">{{ s.title }}</span>
+                <span class="demo-card-sub">{{ s.subtitle }}</span>
+                {% for tag in s.owasp %}
+                <span class="demo-tag">{{ tag }}</span>
+                {% endfor %}
+              </button>
               {% endfor %}
-            </select>
-          </div>
+            </div>
+            <p class="demo-note hidden" id="scenario-note"></p>
+          </section>
 
-          <dl class="trusted-readonly" id="segment-detail" hidden>
-            <dt>Tags</dt>
-            <dd id="segment-tags"></dd>
-            <dt>Purchase history</dt>
-            <dd id="segment-history"></dd>
-          </dl>
-        </section>
+          <form id="campaign-form">
+            <section class="zone zone-trusted" aria-labelledby="trusted-heading">
+              <p class="zone-label" id="trusted-heading">Trusted zone</p>
 
-        <section class="zone zone-untrusted" aria-labelledby="untrusted-heading">
-          <p class="zone-label" id="untrusted-heading">Untrusted zone</p>
+              <details class="system-prompt-panel">
+                <summary>System prompt — {{ system_prompt_style }} (read-only)</summary>
+                <p class="hint" style="margin:0 0 0.5rem">
+                  <code>lab</code> = naive priority rules for workshops.
+                  <code>hardened</code> = explicit guardrails (models often refuse anyway).
+                  Use <code>LLM_MODE=stub</code> for guaranteed ①②③.
+                </p>
+                <pre class="system-prompt-pre">{{ system_prompt }}</pre>
+              </details>
 
-          <div class="field">
-            <label for="customer">
-              Customer record
-              <span class="hint">— notes may contain indirect injection (LLM01)</span>
-            </label>
-            <select id="customer" name="customer_id" required disabled>
-              <option value="">Select a segment first…</option>
-            </select>
-          </div>
+              <div class="field">
+                <label for="segment">Segment data</label>
+                <select id="segment" name="segment_id" required>
+                  <option value="">Select a segment…</option>
+                  {% for seg in segments %}
+                  <option
+                    value="{{ seg.id }}"
+                    data-name="{{ seg.name }}"
+                    data-tags="{{ seg.tags | join(', ') }}"
+                    data-history="{{ seg.purchase_history_summary }}"
+                  >
+                    {{ seg.name }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
 
-          <div class="field">
-            <label for="customer-notes">CRM notes (included in prompt)</label>
-            <textarea
-              id="customer-notes"
-              readonly
-              rows="3"
-              placeholder="Select a customer to preview their notes."
-            ></textarea>
-          </div>
+              <dl class="trusted-readonly" id="segment-detail" hidden>
+                <dt>Tags</dt>
+                <dd id="segment-tags"></dd>
+                <dt>Purchase history</dt>
+                <dd id="segment-history"></dd>
+              </dl>
+            </section>
 
-          <div class="field">
-            <label for="brief">
-              Marketer brief
-              <span class="hint">— free text, direct injection surface (LLM01)</span>
-            </label>
-            <textarea
-              id="brief"
-              name="brief"
-              required
-              placeholder="Describe the campaign goal, tone, and offer…"
-            ></textarea>
-          </div>
-        </section>
+            <section class="zone zone-untrusted" aria-labelledby="untrusted-heading">
+              <p class="zone-label" id="untrusted-heading">Untrusted zone</p>
 
-        <div class="actions">
-          <button type="submit" class="primary" id="generate-btn">Generate email</button>
-          <button type="button" class="secondary" id="example-brief-btn">
-            Load example brief
-          </button>
-          <span class="meta">Output is rendered unsanitised (LLM05)</span>
+              <div class="field">
+                <label for="customer">
+                  Customer record
+                  <span class="hint">— notes · indirect injection ②</span>
+                </label>
+                <select id="customer" name="customer_id" required disabled>
+                  <option value="">Select a segment first…</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="customer-notes">CRM notes (included in prompt)</label>
+                <textarea
+                  id="customer-notes"
+                  readonly
+                  rows="3"
+                  placeholder="Select a customer to preview their notes."
+                ></textarea>
+              </div>
+
+              <div class="field">
+                <label for="brief">
+                  Marketer brief
+                  <span class="hint">— free text · direct injection ①</span>
+                </label>
+                <textarea
+                  id="brief"
+                  name="brief"
+                  required
+                  placeholder="Describe the campaign goal, tone, and offer…"
+                ></textarea>
+              </div>
+            </section>
+
+            <div class="actions">
+              <button type="submit" class="primary" id="generate-btn">Generate email</button>
+              <span class="meta">↓ LLM call → output handler → unsanitised preview ③</span>
+            </div>
+          </form>
+
+          <p id="status" role="status"></p>
+
+          <section class="output-section hidden" id="results">
+            <h2>Draft</h2>
+            <div class="output-card">
+              <header>
+                Output handler → rendered in browser (unsanitised) — LLM05 ③
+                <span class="hint output-hint">
+                  <code>innerHTML</code> — <code>&lt;script&gt;</code> inert; event handlers run.
+                </span>
+              </header>
+              <div class="output-subject" id="out-subject"></div>
+              <div class="output-body" id="out-body"></div>
+            </div>
+
+            {% if show_prompt %}
+            <details class="prompt-panel" open>
+              <summary>Prompt sent to model (instructor debug)</summary>
+              <pre id="out-prompt"></pre>
+            </details>
+            {% endif %}
+            <details class="prompt-panel">
+              <summary>Raw model response</summary>
+              <pre id="out-raw"></pre>
+            </details>
+          </section>
         </div>
-      </form>
-
-      <p id="status" role="status"></p>
-
-      <section class="output-section hidden" id="results">
-        <h2>Draft</h2>
-        <div class="output-card">
-          <header>
-            Rendered output (unsanitised) — LLM05
-            <span class="hint" style="font-weight:400;display:block;margin-top:0.2rem">
-              Assigned via <code>innerHTML</code> — <code>&lt;script&gt;</code> tags appear in the DOM but do not run; event handlers (e.g. <code>onerror</code>) do.
-            </span>
-          </header>
-          <div class="output-subject" id="out-subject"></div>
-          <div class="output-body" id="out-body"></div>
-        </div>
-
-        {% if show_prompt %}
-        <details class="prompt-panel">
-          <summary>Prompt sent to model (instructor debug)</summary>
-          <pre id="out-prompt"></pre>
-        </details>
-        {% endif %}
-      </section>
+      </div>
     </div>
 
+    <script id="demo-scenarios-data" type="application/json">{{ demo_scenarios_json | safe }}</script>
     <script>
+      const DEMO_SCENARIOS = JSON.parse(
+        document.getElementById("demo-scenarios-data").textContent
+      );
       const segmentSelect = document.getElementById("segment");
       const customerSelect = document.getElementById("customer");
       const segmentDetail = document.getElementById("segment-detail");
       const segmentTags = document.getElementById("segment-tags");
       const segmentHistory = document.getElementById("segment-history");
       const customerNotes = document.getElementById("customer-notes");
+      const briefEl = document.getElementById("brief");
       const form = document.getElementById("campaign-form");
       const statusEl = document.getElementById("status");
       const results = document.getElementById("results");
       const outSubject = document.getElementById("out-subject");
       const outBody = document.getElementById("out-body");
       const outPrompt = document.getElementById("out-prompt");
+      const outRaw = document.getElementById("out-raw");
+      const configWarning = document.getElementById("config-warning");
       const generateBtn = document.getElementById("generate-btn");
-
-      const EXAMPLE_BRIEF =
-        "Write a warm, concise email promoting 15% off waterproof shells. " +
-        "Mention loyalty and early access. Plain text only.";
+      const scenarioNote = document.getElementById("scenario-note");
+      const demoGrid = document.getElementById("demo-grid");
 
       let customersCache = [];
+      let loadCustomersPromise = null;
+
+      async function checkHealth() {
+        try {
+          const res = await fetch("/api/health");
+          const h = await res.json();
+          if (h.llm_mode === "live" && !h.live_ready) {
+            configWarning.textContent =
+              `Live mode is on but not ready: ${h.message || "check .env"}. ` +
+              `Provider: ${h.llm_provider || "openai"} — set the API key in .env or use LLM_MODE=stub.`;
+            configWarning.classList.remove("hidden");
+          }
+        } catch {
+          /* ignore */
+        }
+      }
+      checkHealth();
 
       function setStatus(message, isError = false) {
         statusEl.textContent = message;
@@ -164,7 +268,7 @@
         const res = await fetch(`/api/segments/${segmentId}/customers`);
         if (!res.ok) {
           setStatus("Failed to load customers", true);
-          return;
+          throw new Error("Failed to load customers");
         }
         customersCache = await res.json();
         customerSelect.innerHTML = '<option value="">Select a customer…</option>';
@@ -178,14 +282,22 @@
         customerSelect.disabled = false;
       }
 
+      function selectCustomerById(customerId) {
+        customerSelect.value = customerId;
+        const opt = customerSelect.selectedOptions[0];
+        customerNotes.value = opt?.dataset?.notes || "";
+      }
+
       segmentSelect.addEventListener("change", () => {
         updateSegmentDetail();
         const id = segmentSelect.value;
-        if (id) loadCustomers(id);
-        else {
+        if (id) {
+          loadCustomersPromise = loadCustomers(id);
+        } else {
           customerSelect.innerHTML =
             '<option value="">Select a segment first…</option>';
           customerSelect.disabled = true;
+          loadCustomersPromise = null;
         }
       });
 
@@ -194,8 +306,27 @@
         customerNotes.value = opt?.dataset?.notes || "";
       });
 
-      document.getElementById("example-brief-btn").addEventListener("click", () => {
-        document.getElementById("brief").value = EXAMPLE_BRIEF;
+      demoGrid.addEventListener("click", async (e) => {
+        const card = e.target.closest(".demo-card");
+        if (!card) return;
+
+        const scenario = DEMO_SCENARIOS.find((s) => s.id === card.dataset.scenarioId);
+        if (!scenario) return;
+
+        document.querySelectorAll(".demo-card").forEach((c) => c.classList.remove("active"));
+        card.classList.add("active");
+
+        segmentSelect.value = scenario.segment_id;
+        updateSegmentDetail();
+        loadCustomersPromise = loadCustomers(scenario.segment_id);
+        await loadCustomersPromise;
+        selectCustomerById(scenario.customer_id);
+        briefEl.value = scenario.brief;
+        const label = scenario.diagram_label ? `${scenario.diagram_label} — ` : "";
+        scenarioNote.textContent = label + scenario.instructor_note;
+        scenarioNote.classList.remove("hidden");
+        setStatus(`Loaded scenario: ${scenario.title}`);
+        results.classList.add("hidden");
       });
 
       form.addEventListener("submit", async (e) => {
@@ -207,7 +338,7 @@
         const payload = {
           segment_id: segmentSelect.value,
           customer_id: customerSelect.value,
-          brief: document.getElementById("brief").value,
+          brief: briefEl.value,
         };
 
         try {
@@ -226,10 +357,12 @@
           }
 
           outSubject.textContent = data.subject;
-          // Intentional LLM05: model HTML/JS is injected into the DOM unsanitised.
           outBody.innerHTML = data.body;
           if (outPrompt && data.prompt) {
             outPrompt.textContent = data.prompt;
+          }
+          if (outRaw) {
+            outRaw.textContent = data.raw;
           }
           results.classList.remove("hidden");
           setStatus(`Done (${data.llm_mode} mode).`);

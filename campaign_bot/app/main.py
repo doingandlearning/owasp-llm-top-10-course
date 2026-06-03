@@ -1,3 +1,5 @@
+import json
+import logging
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
@@ -5,9 +7,13 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from app import data_store, llm, prompt_builder
+from app import data_store, demo_payloads, llm, prompt_builder
 from app.config import ROOT, settings
+from app.exceptions import LLMDisabled, LLMNotConfigured, LLMProviderError
 from app.models import GenerationRequest, GenerationResponse
+
+if settings.debug:
+    logging.basicConfig(level=logging.INFO)
 
 app = FastAPI(
     title="CampaignBot",
@@ -22,11 +28,36 @@ _last_prompt: str | None = None
 
 @app.get("/api/health")
 def health() -> dict:
-    return {
+    mode = settings.normalized_llm_mode()
+    payload = {
         "status": "ok",
-        "llm_mode": settings.llm_mode,
+        "llm_mode": mode,
         "show_prompt": settings.show_prompt,
+        "debug": settings.debug,
+        "system_prompt_style": settings.normalized_system_prompt_style(),
     }
+    if mode == "live":
+        payload["llm_provider"] = settings.normalized_llm_provider()
+        payload["live_ready"] = settings.live_ready()
+        payload["live_disabled"] = settings.disable_live_llm
+        payload["model"] = settings.live_model_name()
+        if not settings.live_ready():
+            payload["status"] = "degraded"
+            if settings.disable_live_llm:
+                payload["message"] = "DISABLE_LIVE_LLM is set"
+            else:
+                payload["message"] = settings.live_config_hint()
+    return payload
+
+
+@app.get("/api/demo-scenarios")
+def api_demo_scenarios():
+    return demo_payloads.list_demo_scenarios()
+
+
+@app.get("/api/system-prompt")
+def api_system_prompt():
+    return {"content": prompt_builder.load_system_prompt()}
 
 
 @app.get("/api/segments")
@@ -70,34 +101,53 @@ def api_generate(body: GenerationRequest):
     )
     _last_prompt = prompt
 
+    mode = settings.normalized_llm_mode()
+    if mode not in ("stub", "live"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid LLM_MODE '{settings.llm_mode}'. Use stub or live.",
+        )
+
     try:
         subject, body_text, raw = llm.complete(
             prompt=prompt,
             brief=body.brief,
             customer=customer,
-            mode=settings.llm_mode.lower(),
+            mode=mode,
         )
-    except NotImplementedError as exc:
-        raise HTTPException(status_code=501, detail=str(exc)) from exc
+    except LLMNotConfigured as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except LLMDisabled as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except LLMProviderError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
 
     return GenerationResponse(
         subject=subject,
         body=body_text,
         raw=raw,
         prompt=prompt if settings.show_prompt else None,
-        llm_mode=settings.llm_mode,
+        llm_mode=mode,
     )
 
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
+    scenarios = demo_payloads.list_demo_scenarios()
     return templates.TemplateResponse(
         request,
         "index.html",
         {
             "show_prompt": settings.show_prompt,
-            "llm_mode": settings.llm_mode,
+            "llm_mode": settings.normalized_llm_mode(),
             "segments": data_store.list_segments(),
+            "system_prompt": prompt_builder.load_system_prompt(),
+            "system_prompt_style": settings.normalized_system_prompt_style(),
+            "demo_scenarios": scenarios,
+            "demo_scenarios_json": json.dumps(
+                [s.model_dump() for s in scenarios],
+                ensure_ascii=False,
+            ),
         },
     )
 
