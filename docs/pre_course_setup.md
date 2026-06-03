@@ -39,11 +39,9 @@ You do **not** need an LLM API key. Both apps run in **stub mode** by default (p
 ### 1. Clone the repository
 
 ```bash
-git clone <REPO_URL>
+git clone https://github.com/doingandlearning/owasp-llm-top-10-course
 cd ometria-owasp-llm
 ```
-
-Replace `<REPO_URL>` with the link your facilitator sent (internal GitHub/GitLab, etc.).
 
 ### 2. Create environment files
 
