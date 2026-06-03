@@ -11,7 +11,6 @@ Hands-on course on the [OWASP Top 10 for LLM Applications](https://genai.owasp.o
 | Role | Document |
 |------|----------|
 | **Delegate** (before the course) | [docs/pre_course_setup.md](docs/pre_course_setup.md) — clone, Docker, verification checklist |
-| **Facilitator** (running the day) | [docs/workshop_agenda.md](docs/workshop_agenda.md) — flow, labs, debriefs, cut list |
 | **Quick run** (already set up) | [Run both apps](#run-both-apps) below |
 
 Delegates must complete pre-course setup before the workshop. We do not use class time for installs.

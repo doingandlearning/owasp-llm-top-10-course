@@ -2,7 +2,7 @@
 ## Ometria Engineering · One-Day Remote Delivery
 
 > **Facilitator:** Kevin Cunningham  
-> **Format:** Remote, Zoom with breakout rooms  
+> **Format:** Remote with breakout rooms  
 > **Apps:** CampaignBot `:8080` · InsightAgent `:8081`  
 > **Mode:** `LLM_MODE=stub` for all delegates; instructor may switch to live for key moments if rehearsed  
 > **Pre-work:** Delegates complete [pre_course_setup.md](pre_course_setup.md) before the day
@@ -278,5 +278,5 @@ The Google Docs from each breakout room are worth collecting — they tell you w
 - [ ] CampaignBot Google Doc × number of breakout rooms
 - [ ] InsightAgent Google Doc × number of breakout rooms
 - [ ] Intro slides (6-slide deck) ready
-- [ ] Breakout rooms pre-assigned in Zoom
+- [ ] Breakout rooms pre-assigned in Teams 
 - [ ] Delegates received [pre_course_setup.md](pre_course_setup.md) and repo URL

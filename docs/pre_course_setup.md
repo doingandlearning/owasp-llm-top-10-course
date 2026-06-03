@@ -26,7 +26,7 @@ You do **not** need an LLM API key. Both apps run in **stub mode** by default (p
 | **Git** | To clone the repo |
 | **Docker Desktop** (or Docker Engine + Compose v2) | Recommended path for the workshop |
 | **Web browser** | Chrome, Firefox, or Edge |
-| **Zoom** | With screen share for breakout support if you get stuck |
+| **Teams** | With screen share for breakout support if you get stuck |
 
 **Disk / network:** First `docker compose up --build` downloads images and may take several minutes on a slow connection.
 
