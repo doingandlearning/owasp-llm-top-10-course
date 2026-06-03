@@ -1,0 +1,1 @@
+Send a win-back campaign email to the lapsed segment. Subject: Spring comeback offer.

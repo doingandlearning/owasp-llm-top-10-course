@@ -9,6 +9,8 @@
   <body>
     <div class="banner">
       Intentionally vulnerable lab app — localhost only.
+      <a href="http://127.0.0.1:8081/" title="Session 2">InsightAgent :8081</a>
+      ·
       <a href="https://genai.owasp.org/llmrisk/llm01-prompt-injection/" target="_blank" rel="noopener">LLM01</a>
       ·
       <a href="https://genai.owasp.org/llmrisk/llm05-improper-output-handling/" target="_blank" rel="noopener">LLM05</a>
@@ -21,47 +23,21 @@
           Draft campaign emails from segment data and a marketer brief.
           <span class="badge badge-{{ llm_mode }}" id="mode-badge">LLM_MODE={{ llm_mode }}</span>
           <span class="badge badge-prompt">prompt={{ system_prompt_style }}</span>
+          <button
+            type="button"
+            class="btn-arch-open"
+            id="arch-open-btn"
+            aria-expanded="false"
+            aria-controls="arch-modal"
+          >
+            Architecture diagram
+          </button>
         </p>
       </header>
 
       <p class="config-warning hidden" id="config-warning" role="alert"></p>
 
       <div class="layout">
-        <aside class="arch-panel" aria-label="Architecture diagram">
-          <h2 class="arch-title">Architecture</h2>
-          <p class="arch-caption">Matches <code>ometria.excalidraw</code> — CampaignBot frame</p>
-
-          <div class="arch-zone arch-zone-trusted">
-            <span class="arch-zone-label">Trusted zone</span>
-            <div class="arch-node">System prompt</div>
-            <div class="arch-node">Segment data</div>
-            <div class="arch-node arch-node-builder">Prompt builder</div>
-            <p class="arch-node-hint">Concatenates all inputs</p>
-          </div>
-
-          <div class="arch-connector">↓ feeds untrusted text into same string</div>
-
-          <div class="arch-zone arch-zone-untrusted">
-            <span class="arch-zone-label">Untrusted zone</span>
-            <div class="arch-node arch-node-untrusted">Marketer brief</div>
-            <div class="arch-node arch-node-untrusted">Customer records · notes</div>
-          </div>
-
-          <div class="arch-node arch-node-llm">LLM call</div>
-          <p class="arch-node-hint">Sees everything as one string</p>
-
-          <div class="arch-node arch-node-pipeline">Output handler</div>
-          <p class="arch-node-hint">Returns raw text to UI</p>
-
-          <div class="arch-node arch-node-browser">Browser preview</div>
-
-          <ul class="arch-risks">
-            <li><strong>①</strong> Direct injection — marketer brief</li>
-            <li><strong>②</strong> Indirect injection — CRM notes</li>
-            <li><strong>③</strong> Output not sanitised — LLM05 / XSS</li>
-          </ul>
-        </aside>
-
         <div class="main-col">
           <section class="demo-panel" aria-labelledby="demo-heading">
             <h2 id="demo-heading">Instructor demo scenarios</h2>
@@ -201,8 +177,88 @@
       </div>
     </div>
 
+    <div
+      id="arch-modal"
+      class="arch-modal hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="arch-modal-title"
+      hidden
+    >
+      <div class="arch-modal-backdrop" data-arch-close tabindex="-1"></div>
+      <div class="arch-modal-dialog">
+        <header class="arch-modal-header">
+          <h2 id="arch-modal-title" class="arch-title">Architecture</h2>
+          <button type="button" class="arch-modal-close" data-arch-close aria-label="Close diagram">×</button>
+        </header>
+        <div class="arch-panel arch-modal-body" aria-label="Architecture diagram">
+          <p class="arch-caption">Matches <code>ometria.excalidraw</code> — CampaignBot frame</p>
+
+          <div class="arch-zone arch-zone-trusted">
+            <span class="arch-zone-label">Trusted zone</span>
+            <div class="arch-node">System prompt</div>
+            <div class="arch-node">Segment data</div>
+            <div class="arch-node arch-node-builder">Prompt builder</div>
+            <p class="arch-node-hint">Concatenates all inputs</p>
+          </div>
+
+          <div class="arch-connector">↓ feeds untrusted text into same string</div>
+
+          <div class="arch-zone arch-zone-untrusted">
+            <span class="arch-zone-label">Untrusted zone</span>
+            <div class="arch-node arch-node-untrusted">Marketer brief</div>
+            <div class="arch-node arch-node-untrusted">Customer records · notes</div>
+          </div>
+
+          <div class="arch-node arch-node-llm">LLM call</div>
+          <p class="arch-node-hint">Sees everything as one string</p>
+
+          <div class="arch-node arch-node-pipeline">Output handler</div>
+          <p class="arch-node-hint">Returns raw text to UI</p>
+
+          <div class="arch-node arch-node-browser">Browser preview</div>
+
+          <ul class="arch-risks">
+            <li><strong>①</strong> Direct injection — marketer brief</li>
+            <li><strong>②</strong> Indirect injection — CRM notes</li>
+            <li><strong>③</strong> Output not sanitised — LLM05 / XSS</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
     <script id="demo-scenarios-data" type="application/json">{{ demo_scenarios_json | safe }}</script>
     <script>
+      (function initArchModal() {
+        const modal = document.getElementById("arch-modal");
+        const openBtn = document.getElementById("arch-open-btn");
+        if (!modal || !openBtn) return;
+
+        function openModal() {
+          modal.classList.remove("hidden");
+          modal.removeAttribute("hidden");
+          openBtn.setAttribute("aria-expanded", "true");
+          document.body.classList.add("arch-modal-open");
+          modal.querySelector(".arch-modal-close")?.focus();
+        }
+
+        function closeModal() {
+          modal.classList.add("hidden");
+          modal.setAttribute("hidden", "");
+          openBtn.setAttribute("aria-expanded", "false");
+          document.body.classList.remove("arch-modal-open");
+          openBtn.focus();
+        }
+
+        openBtn.addEventListener("click", openModal);
+        modal.querySelectorAll("[data-arch-close]").forEach((el) => {
+          el.addEventListener("click", closeModal);
+        });
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape" && !modal.classList.contains("hidden")) closeModal();
+        });
+      })();
+
       const DEMO_SCENARIOS = JSON.parse(
         document.getElementById("demo-scenarios-data").textContent
       );

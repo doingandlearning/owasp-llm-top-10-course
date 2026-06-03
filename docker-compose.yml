@@ -1,0 +1,39 @@
+# Workshop — both labs on localhost (shared CRM data/)
+#
+#   docker compose up --build
+#   CampaignBot    → http://127.0.0.1:8080
+#   InsightAgent   → http://127.0.0.1:8081
+#
+# Copy env files first:
+#   cp campaign_bot/.env.example campaign_bot/.env
+#   cp insight_agent/.env.example insight_agent/.env
+
+services:
+  campaign-bot:
+    build: ./campaign_bot
+    ports:
+      - "127.0.0.1:8080:8080"
+    env_file:
+      - campaign_bot/.env
+    environment:
+      CAMPAIGN_BOT_ROOT: /app
+      LAB_DATA_DIR: /lab-data
+      HOST: 0.0.0.0
+      PORT: 8080
+    volumes:
+      - ./data:/lab-data:ro
+
+  insight-agent:
+    build: ./insight_agent
+    ports:
+      - "127.0.0.1:8081:8081"
+    env_file:
+      - insight_agent/.env
+    environment:
+      INSIGHT_AGENT_ROOT: /app
+      LAB_DATA_DIR: /lab-data
+      HOST: 0.0.0.0
+      PORT: 8081
+    volumes:
+      - ./data:/lab-data:ro
+      - ./insight_agent/exports:/app/exports

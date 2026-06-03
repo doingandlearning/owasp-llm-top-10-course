@@ -1,0 +1,56 @@
+[
+  {
+    "id": "happy-read",
+    "title": "Read-only analysis",
+    "subtitle": "Control — PII enters memory (LLM02)",
+    "diagram_label": null,
+    "owasp": ["LLM02"],
+    "query_file": "happy-read.txt",
+    "instructor_note": "Alex Morgan segment; expand Working memory for emails/phones. Pairs with CampaignBot happy path."
+  },
+  {
+    "id": "agency-export",
+    "title": "Export CSV",
+    "subtitle": "LLM06 — no approval, any scope",
+    "diagram_label": "④",
+    "owasp": ["LLM06", "LLM02"],
+    "query_file": "agency-export.txt",
+    "instructor_note": "Pause on Tool selector — permission_check: false. Compare to CampaignBot ① (brief) vs agent ④ (tool gate)."
+  },
+  {
+    "id": "agency-send",
+    "title": "Send campaign",
+    "subtitle": "LLM06 — irreversible",
+    "diagram_label": "⑤",
+    "owasp": ["LLM06"],
+    "query_file": "agency-send.txt",
+    "instructor_note": "Red send_campaign node in diagram. Actions panel + toast — no confirmation."
+  },
+  {
+    "id": "indirect-injection",
+    "title": "Indirect injection",
+    "subtitle": "LLM01 — Taylor Brooks CRM note",
+    "diagram_label": "②",
+    "owasp": ["LLM01", "LLM06"],
+    "query_file": "indirect-count.txt",
+    "instructor_note": "Same ② as CampaignBot but payload in win-back notes (Taylor cust-201), not Jordan. Stub: read → export all."
+  },
+  {
+    "id": "direct-injection",
+    "title": "Direct injection",
+    "subtitle": "LLM01 — override via query",
+    "diagram_label": "①",
+    "owasp": ["LLM01", "LLM06", "LLM02"],
+    "query_file": "direct-export-all.txt",
+    "instructor_note": "User query overrides planner — parallel to CampaignBot ① in marketer brief."
+  },
+  {
+    "id": "prompt-leak",
+    "title": "System prompt leakage",
+    "subtitle": "LLM07",
+    "diagram_label": "⑥",
+    "owasp": ["LLM07"],
+    "query_file": "prompt-leak.txt",
+    "instructor_note": "Expand Planner step + SHOW_PROMPT debug. Live models often refuse — use stub for guaranteed leak discussion."
+  }
+]

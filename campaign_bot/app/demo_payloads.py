@@ -21,7 +21,7 @@ class DemoScenario(BaseModel):
 
 
 def _payloads_dir() -> Path:
-    return settings.data_dir.parent / "payloads"
+    return settings.payloads_dir
 
 
 def list_demo_scenarios() -> list[DemoScenario]:

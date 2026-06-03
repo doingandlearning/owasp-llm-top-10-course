@@ -16,6 +16,8 @@ docker compose up --build
 
 Open [http://127.0.0.1:8080](http://127.0.0.1:8080).
 
+**Both labs (CampaignBot + InsightAgent):** from the repo root, `docker compose up --build` — see [../README.md](../README.md). Shared CRM fixtures live in [../data/](../data/).
+
 Stop: `Ctrl+C`, then `docker compose down`.
 
 **Live Claude/OpenAI:** edit `.env` (`LLM_MODE=live`, API keys), then:
@@ -202,6 +204,6 @@ Payload reference: [`docs/PAYLOADS.md`](docs/PAYLOADS.md).
 
 ## Guardrails
 
-- Use fictional seed data only (`data/`).
+- Use fictional seed data only (`data/` or repo `../data/` when `LAB_DATA_DIR` is set).
 - Default bind is loopback; avoid `--host 0.0.0.0` on untrusted networks.
 - Set `LLM_MODE=stub` or `DISABLE_LIVE_LLM=true` in classrooms without API keys.

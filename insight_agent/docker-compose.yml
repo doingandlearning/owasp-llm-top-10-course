@@ -1,0 +1,12 @@
+services:
+  insight-agent:
+    build: .
+    ports:
+      - "127.0.0.1:8081:8081"
+    env_file:
+      - .env
+    environment:
+      LAB_DATA_DIR: /lab-data
+    volumes:
+      - ../data:/lab-data:ro
+      - ./exports:/app/exports

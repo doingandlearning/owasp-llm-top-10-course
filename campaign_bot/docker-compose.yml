@@ -8,8 +8,11 @@ services:
       - .env
     environment:
       CAMPAIGN_BOT_ROOT: /app
+      LAB_DATA_DIR: /lab-data
       HOST: 0.0.0.0
       PORT: 8080
+    volumes:
+      - ../data:/lab-data:ro
     restart: unless-stopped
     healthcheck:
       test:

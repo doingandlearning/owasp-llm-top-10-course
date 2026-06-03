@@ -13,6 +13,7 @@ class Customer(BaseModel):
     segment_id: str
     name: str
     email: str
+    phone: str = ""
     notes: str
 
 
