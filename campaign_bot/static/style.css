@@ -1,0 +1,255 @@
+:root {
+  --trusted-border: #0c8599;
+  --trusted-bg: #e3fafc;
+  --untrusted-border: #e03131;
+  --untrusted-bg: #fff5f5;
+  --llm: #6741d9;
+  --llm-bg: #f3f0ff;
+  --muted: #868e96;
+  --text: #212529;
+  --banner: #fff3bf;
+  --banner-border: #e67700;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--text);
+  line-height: 1.5;
+  margin: 0;
+  background: #f8f9fa;
+}
+
+.banner {
+  background: var(--banner);
+  border-bottom: 2px solid var(--banner-border);
+  padding: 0.6rem 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.wrap {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 3rem;
+}
+
+header h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.75rem;
+}
+
+header p {
+  margin: 0 0 1.5rem;
+  color: var(--muted);
+}
+
+.zone {
+  border: 2px dashed;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.zone-trusted {
+  border-color: var(--trusted-border);
+  background: var(--trusted-bg);
+}
+
+.zone-untrusted {
+  border-color: var(--untrusted-border);
+  background: var(--untrusted-bg);
+}
+
+.zone-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin: 0 0 0.75rem;
+}
+
+.zone-trusted .zone-label {
+  color: var(--trusted-border);
+}
+
+.zone-untrusted .zone-label {
+  color: var(--untrusted-border);
+}
+
+.field {
+  margin-bottom: 1rem;
+}
+
+.field:last-child {
+  margin-bottom: 0;
+}
+
+label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 0.35rem;
+}
+
+.hint {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+select,
+textarea {
+  width: 100%;
+  font: inherit;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  background: #fff;
+}
+
+textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.trusted-readonly {
+  font-size: 0.85rem;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 6px;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #99e9f2;
+}
+
+.trusted-readonly dt {
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
+.trusted-readonly dt:first-child {
+  margin-top: 0;
+}
+
+.trusted-readonly dd {
+  margin: 0.15rem 0 0;
+  color: #495057;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin: 1.25rem 0;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 0.55rem 1.1rem;
+  border: none;
+  font-weight: 600;
+}
+
+button.primary {
+  background: var(--llm);
+  color: #fff;
+}
+
+button.primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+button.secondary {
+  background: #dee2e6;
+  color: var(--text);
+}
+
+.meta {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+#status {
+  min-height: 1.25rem;
+  font-size: 0.9rem;
+  color: var(--untrusted-border);
+}
+
+.output-section {
+  margin-top: 1.5rem;
+}
+
+.output-section h2 {
+  font-size: 1.1rem;
+  margin: 0 0 0.75rem;
+}
+
+.output-card {
+  background: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.output-card header {
+  padding: 0.5rem 0.75rem;
+  background: #f1f3f5;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--untrusted-border);
+}
+
+.output-subject {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #eee;
+  font-weight: 600;
+}
+
+.output-body {
+  padding: 1rem;
+  min-height: 4rem;
+}
+
+.prompt-panel {
+  margin-top: 1rem;
+}
+
+.prompt-panel summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.prompt-panel pre {
+  margin: 0.75rem 0 0;
+  padding: 0.75rem;
+  background: #212529;
+  color: #f8f9fa;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.hidden {
+  display: none;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  background: var(--llm-bg);
+  color: var(--llm);
+  font-weight: 700;
+  margin-left: 0.35rem;
+}

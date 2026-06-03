@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CampaignBot — OWASP LLM Lab</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <div class="banner">
+      Intentionally vulnerable lab app — localhost only. Do not deploy to production.
+    </div>
+
+    <div class="wrap">
+      <header>
+        <h1>CampaignBot</h1>
+        <p>
+          Draft campaign emails from segment data and a marketer brief.
+          <span class="badge">LLM_MODE={{ llm_mode }}</span>
+        </p>
+      </header>
+
+      <form id="campaign-form">
+        <section class="zone zone-trusted" aria-labelledby="trusted-heading">
+          <p class="zone-label" id="trusted-heading">Trusted zone</p>
+
+          <div class="field">
+            <label for="segment">Segment</label>
+            <select id="segment" name="segment_id" required>
+              <option value="">Select a segment…</option>
+              {% for seg in segments %}
+              <option
+                value="{{ seg.id }}"
+                data-name="{{ seg.name }}"
+                data-tags="{{ seg.tags | join(', ') }}"
+                data-history="{{ seg.purchase_history_summary }}"
+              >
+                {{ seg.name }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <dl class="trusted-readonly" id="segment-detail" hidden>
+            <dt>Tags</dt>
+            <dd id="segment-tags"></dd>
+            <dt>Purchase history</dt>
+            <dd id="segment-history"></dd>
+          </dl>
+        </section>
+
+        <section class="zone zone-untrusted" aria-labelledby="untrusted-heading">
+          <p class="zone-label" id="untrusted-heading">Untrusted zone</p>
+
+          <div class="field">
+            <label for="customer">
+              Customer record
+              <span class="hint">— notes may contain indirect injection (LLM01)</span>
+            </label>
+            <select id="customer" name="customer_id" required disabled>
+              <option value="">Select a segment first…</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="customer-notes">CRM notes (included in prompt)</label>
+            <textarea
+              id="customer-notes"
+              readonly
+              rows="3"
+              placeholder="Select a customer to preview their notes."
+            ></textarea>
+          </div>
+
+          <div class="field">
+            <label for="brief">
+              Marketer brief
+              <span class="hint">— free text, direct injection surface (LLM01)</span>
+            </label>
+            <textarea
+              id="brief"
+              name="brief"
+              required
+              placeholder="Describe the campaign goal, tone, and offer…"
+            ></textarea>
+          </div>
+        </section>
+
+        <div class="actions">
+          <button type="submit" class="primary" id="generate-btn">Generate email</button>
+          <button type="button" class="secondary" id="example-brief-btn">
+            Load example brief
+          </button>
+          <span class="meta">Output is rendered unsanitised (LLM05)</span>
+        </div>
+      </form>
+
+      <p id="status" role="status"></p>
+
+      <section class="output-section hidden" id="results">
+        <h2>Draft</h2>
+        <div class="output-card">
+          <header>
+            Rendered output (unsanitised) — LLM05
+            <span class="hint" style="font-weight:400;display:block;margin-top:0.2rem">
+              Assigned via <code>innerHTML</code> — <code>&lt;script&gt;</code> tags appear in the DOM but do not run; event handlers (e.g. <code>onerror</code>) do.
+            </span>
+          </header>
+          <div class="output-subject" id="out-subject"></div>
+          <div class="output-body" id="out-body"></div>
+        </div>
+
+        {% if show_prompt %}
+        <details class="prompt-panel">
+          <summary>Prompt sent to model (instructor debug)</summary>
+          <pre id="out-prompt"></pre>
+        </details>
+        {% endif %}
+      </section>
+    </div>
+
+    <script>
+      const segmentSelect = document.getElementById("segment");
+      const customerSelect = document.getElementById("customer");
+      const segmentDetail = document.getElementById("segment-detail");
+      const segmentTags = document.getElementById("segment-tags");
+      const segmentHistory = document.getElementById("segment-history");
+      const customerNotes = document.getElementById("customer-notes");
+      const form = document.getElementById("campaign-form");
+      const statusEl = document.getElementById("status");
+      const results = document.getElementById("results");
+      const outSubject = document.getElementById("out-subject");
+      const outBody = document.getElementById("out-body");
+      const outPrompt = document.getElementById("out-prompt");
+      const generateBtn = document.getElementById("generate-btn");
+
+      const EXAMPLE_BRIEF =
+        "Write a warm, concise email promoting 15% off waterproof shells. " +
+        "Mention loyalty and early access. Plain text only.";
+
+      let customersCache = [];
+
+      function setStatus(message, isError = false) {
+        statusEl.textContent = message;
+        statusEl.style.color = isError ? "#e03131" : "#868e96";
+      }
+
+      function updateSegmentDetail() {
+        const opt = segmentSelect.selectedOptions[0];
+        if (!opt || !opt.value) {
+          segmentDetail.hidden = true;
+          return;
+        }
+        segmentTags.textContent = opt.dataset.tags;
+        segmentHistory.textContent = opt.dataset.history;
+        segmentDetail.hidden = false;
+      }
+
+      async function loadCustomers(segmentId) {
+        customerSelect.innerHTML = '<option value="">Loading…</option>';
+        customerSelect.disabled = true;
+        customerNotes.value = "";
+
+        const res = await fetch(`/api/segments/${segmentId}/customers`);
+        if (!res.ok) {
+          setStatus("Failed to load customers", true);
+          return;
+        }
+        customersCache = await res.json();
+        customerSelect.innerHTML = '<option value="">Select a customer…</option>';
+        for (const c of customersCache) {
+          const opt = document.createElement("option");
+          opt.value = c.id;
+          opt.textContent = `${c.name} (${c.email})`;
+          opt.dataset.notes = c.notes;
+          customerSelect.appendChild(opt);
+        }
+        customerSelect.disabled = false;
+      }
+
+      segmentSelect.addEventListener("change", () => {
+        updateSegmentDetail();
+        const id = segmentSelect.value;
+        if (id) loadCustomers(id);
+        else {
+          customerSelect.innerHTML =
+            '<option value="">Select a segment first…</option>';
+          customerSelect.disabled = true;
+        }
+      });
+
+      customerSelect.addEventListener("change", () => {
+        const opt = customerSelect.selectedOptions[0];
+        customerNotes.value = opt?.dataset?.notes || "";
+      });
+
+      document.getElementById("example-brief-btn").addEventListener("click", () => {
+        document.getElementById("brief").value = EXAMPLE_BRIEF;
+      });
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        setStatus("Generating…");
+        generateBtn.disabled = true;
+        results.classList.add("hidden");
+
+        const payload = {
+          segment_id: segmentSelect.value,
+          customer_id: customerSelect.value,
+          brief: document.getElementById("brief").value,
+        };
+
+        try {
+          const res = await fetch("/api/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            const d = data.detail;
+            const msg = Array.isArray(d)
+              ? d.map((x) => x.msg).join("; ")
+              : d || res.statusText;
+            throw new Error(msg);
+          }
+
+          outSubject.textContent = data.subject;
+          // Intentional LLM05: model HTML/JS is injected into the DOM unsanitised.
+          outBody.innerHTML = data.body;
+          if (outPrompt && data.prompt) {
+            outPrompt.textContent = data.prompt;
+          }
+          results.classList.remove("hidden");
+          setStatus(`Done (${data.llm_mode} mode).`);
+        } catch (err) {
+          setStatus(err.message || "Generation failed", true);
+        } finally {
+          generateBtn.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,14 @@
+[
+  {
+    "id": "high-value-repeat",
+    "name": "High-value repeat buyers",
+    "tags": ["loyal", "outerwear", "avg-basket-120"],
+    "purchase_history_summary": "3+ orders in the last 12 months; top categories: jackets, hiking boots; last purchase 18 days ago; email open rate 42%."
+  },
+  {
+    "id": "win-back-lapsed",
+    "name": "Win-back lapsed",
+    "tags": ["lapsed-90d", "accessories", "price-sensitive"],
+    "purchase_history_summary": "Last order 140 days ago; previously bought camp stove and fleece; abandoned cart on trail runners; no email clicks in 60 days."
+  }
+]
