@@ -151,6 +151,7 @@ OpenAI/Azure/Ollama still use `LLM_PROVIDER=openai` and `OPENAI_BASE_URL` as bef
 | `HOST` / `PORT` | `127.0.0.1` / `8080` | Bind address |
 
 | `SYSTEM_PROMPT_STYLE` | `lab` | `lab` (naive rules, workshop default) or `hardened` (explicit guardrails) |
+| `ENABLE_VALIDATORS` | `false` | `true` = pre-validation on brief/notes + post-validation (HTML encode) before UI |
 | `LLM_TEMPERATURE` | `0.9` | Live API temperature |
 
 **Models too “well behaved” in live mode?** Modern LLMs often refuse injection/XSS even when the app is unsafe. Use `SYSTEM_PROMPT_STYLE=lab`, rehearse, and fall back to `LLM_MODE=stub` for guaranteed demos. See [`docs/LIVE_VS_STUB.md`](docs/LIVE_VS_STUB.md).

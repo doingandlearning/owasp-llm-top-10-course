@@ -70,8 +70,10 @@ Follow `campaign_bot/docs/DEMO_SCRIPT.md`.
 |---|---|---|
 | Happy path | Normal campaign generation | — |
 | ① Direct injection | Brief overrides intent | LLM01 |
-| ② Jordan Lee indirect | Attacker never touched the brief | LLM01 |
+| ② Casey Nguyen indirect | Attacker never touched the brief | LLM01 |
 | ③ Output handling | XSS via `innerHTML` | LLM05 |
+
+**Running live (instructor copy):** use the **Casey Nguyen** indirect-injection scenario, not Jordan Lee — Jordan Lee's `PWNED` payload reliably gets refused by a live model (see `campaign_bot/docs/LIVE_VS_STUB.md`). Jordan Lee stays in Lab 1 for delegates on stub, where it works every time. Use the scenario-picker buttons as-is; don't retype payloads by hand.
 
 Pause after each attack. Name what just happened in one sentence. Do not explain mitigations yet.
 
@@ -109,6 +111,7 @@ The most important row. Honest answers here drive the best debrief conversations
 4. Try ③ output handling — inspect what the browser renders
 5. Technical delegates: find where untrusted data enters the prompt in the source code
 6. Stretch: try `SYSTEM_PROMPT_STYLE=hardened` — does it change anything?
+7. **Build the fix:** set `ENABLE_VALIDATORS=true` in `.env`, restart the app, and re-run ①②③. A validation panel shows what the pre-/post-validators caught in real time — this is the room's first hands-on look at a mitigation actually running, not just described. Push technical delegates on whether it's a real fix or a pattern-matching speed bump.
 
 **Debrief (whole group):** Each room reads out their "what surprised you" row. Facilitator maps answers to OWASP risks on the Excalidraw matrix.
 
@@ -190,9 +193,9 @@ Key moments to linger on:
 
 ---
 
-#### 7. Guided risks · _whole group_
+#### 7. Guided risks · _whole group, diagnose-in-chat then reveal_
 
-Four risks without a lab today. Cover each briefly.
+Four risks without a full lab today — but each one now opens with a scenario delegates diagnose themselves in chat before the slides confirm the answer. See [`docs/demo_scripts/07_guided_risks.md`](demo_scripts/07_guided_risks.md) and [`docs/exercises/guided_risks_activity.md`](exercises/guided_risks_activity.md) for the four vignettes and exact facilitation steps. Budget ~25 minutes (was 15 as pure lecture).
 
 | Risk | What to cover | The Ometria angle |
 |---|---|---|
@@ -227,7 +230,7 @@ Three questions to answer:
 
 #### 9. Mitigations and close · _whole group_
 
-**Optional:** Run `SYSTEM_PROMPT_STYLE=hardened` on CampaignBot with the same payloads from Lab 1. Show that hardening at the prompt level helps but does not solve the underlying architectural problems. "Defence in depth, not prompt magic."
+**Optional:** Run `SYSTEM_PROMPT_STYLE=hardened` on CampaignBot with the same payloads from Lab 1. Show that hardening at the prompt level helps but does not solve the underlying architectural problems. "Defence in depth, not prompt magic." Callback: this is the same lesson delegates already found themselves with `ENABLE_VALIDATORS=true` in Lab 1 — pattern-matching catches the demo payload, not the class of attack.
 
 **Cross-app mitigations pattern:**
 
@@ -246,12 +249,14 @@ Three questions to answer:
 ## If time slips — cut in this order
 
 1. Cut LLM03 **supply chain** from the guided risks block (keep LLM08 — most relevant to Ometria's build)
-2. Casey Nguyen variant in CampaignBot demo
-3. Prompt leak ⑥ live demo — mention in passing during Lab 2 debrief instead
-4. Hardened comparison at the close
-5. Shorten closing round to one sentence per *room* rather than per delegate
+2. Drop the diagnose-first step for two of the four guided risks (keep LLM08 and LLM10 as hands-on, LLM03 and LLM09 as straight lecture)
+3. Casey Nguyen variant in CampaignBot demo
+4. Prompt leak ⑥ live demo — mention in passing during Lab 2 debrief instead
+5. Hardened comparison at the close
+6. Shorten closing round to one sentence per *room* rather than per delegate
+7. Lab 1 step 7 (`ENABLE_VALIDATORS`) — if a room is badly behind, they can read the pre/post-validation panel off the instructor's screen at the top of Lab 2 instead of running it themselves
 
-**Do not cut Lab 1, Lab 2, or the threat modelling workshop.**
+**Do not cut Lab 1 steps 1–6, Lab 2, or the threat modelling workshop.**
 
 ---
 
@@ -272,6 +277,7 @@ The Google Docs from each breakout room are worth collecting — they tell you w
 
 - [ ] `docker compose up --build` tested on a clean machine
 - [ ] `:8080` CampaignBot — all three attack scenarios confirmed in stub mode
+- [ ] `:8080` CampaignBot — `ENABLE_VALIDATORS=true` confirmed to block ①②, HTML-encode ③, and restart cleanly back to `false` for the next room/cohort
 - [ ] `:8081` InsightAgent — all six scenarios confirmed in stub mode
 - [ ] Notebook kernel confirmed on Python 3.11/3.12
 - [ ] Excalidraw coverage matrix open and zoomed to full view

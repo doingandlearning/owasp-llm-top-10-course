@@ -65,6 +65,8 @@ class Settings(BaseSettings):
     # lab = naive priority rules (workshop default) | hardened = explicit guardrails
     system_prompt_style: str = "lab"
     llm_temperature: float = 0.9
+    # Pre/post validators on untrusted inputs and model output (off = vulnerable default)
+    enable_validators: bool = False
 
     def normalized_llm_mode(self) -> str:
         return self.llm_mode.strip().lower()

@@ -20,4 +20,6 @@ Indirect injection does not use a special brief file — select the planted cust
 | `indirect-casey` | ② | LLM01 | win-back-lapsed | Casey Nguyen |
 | `output-handling` | ③ | LLM05 | high-value-repeat | Alex Morgan |
 
+**Live delivery:** `direct-injection`, `indirect-casey`, and `output-handling` are all verified working against a live model — use these three, not `indirect-jordan` (stub-only; see [`LIVE_VS_STUB.md`](LIVE_VS_STUB.md)). Use the scenario-picker payloads as-is rather than retyping — the exact wording is what makes them reliable live.
+
 Edit `payloads/scenarios.json` to add scenarios; reference a `brief_file` in the same folder.

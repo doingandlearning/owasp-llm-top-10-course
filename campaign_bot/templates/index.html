@@ -23,6 +23,9 @@
           Draft campaign emails from segment data and a marketer brief.
           <span class="badge badge-{{ llm_mode }}" id="mode-badge">LLM_MODE={{ llm_mode }}</span>
           <span class="badge badge-prompt">prompt={{ system_prompt_style }}</span>
+          <span class="badge badge-validators{% if not enable_validators %} badge-off{% endif %}" id="validators-badge">
+            validators={{ "on" if enable_validators else "off" }}
+          </span>
           <button
             type="button"
             class="btn-arch-open"
@@ -143,7 +146,13 @@
 
             <div class="actions">
               <button type="submit" class="primary" id="generate-btn">Generate email</button>
-              <span class="meta">↓ LLM call → output handler → unsanitised preview ③</span>
+              <span class="meta" id="pipeline-meta">
+                {% if enable_validators %}
+                ↓ pre-validator → LLM → post-validator → browser preview
+                {% else %}
+                ↓ LLM call → output handler → unsanitised preview ③
+                {% endif %}
+              </span>
             </div>
           </form>
 
@@ -151,11 +160,22 @@
 
           <section class="output-section hidden" id="results">
             <h2>Draft</h2>
+            <section class="validation-panel hidden" id="validation-panel" aria-labelledby="validation-heading">
+              <h3 id="validation-heading">Validation (hardening)</h3>
+              <p class="hint" id="validation-intro"></p>
+              <div id="validation-checks"></div>
+            </section>
             <div class="output-card">
               <header>
-                Output handler → rendered in browser (unsanitised) — LLM05 ③
+                <span id="output-header-label">
+                  {% if enable_validators %}
+                  Post-validated output → browser preview
+                  {% else %}
+                  Output handler → rendered in browser (unsanitised) — LLM05 ③
+                  {% endif %}
+                </span>
                 <span class="hint output-hint">
-                  <code>innerHTML</code> — <code>&lt;script&gt;</code> inert; event handlers run.
+                  <code>innerHTML</code> — <code>&lt;script&gt;</code> inert; event handlers run when unsanitised.
                 </span>
               </header>
               <div class="output-subject" id="out-subject"></div>
@@ -200,6 +220,10 @@
             <div class="arch-node">Segment data</div>
             <div class="arch-node arch-node-builder">Prompt builder</div>
             <p class="arch-node-hint">Concatenates all inputs</p>
+            {% if enable_validators %}
+            <div class="arch-node arch-node-validator">Pre-validator</div>
+            <p class="arch-node-hint">Blocks obvious injection before LLM</p>
+            {% endif %}
           </div>
 
           <div class="arch-connector">↓ feeds untrusted text into same string</div>
@@ -213,8 +237,13 @@
           <div class="arch-node arch-node-llm">LLM call</div>
           <p class="arch-node-hint">Sees everything as one string</p>
 
+          {% if enable_validators %}
+          <div class="arch-node arch-node-validator">Post-validator</div>
+          <p class="arch-node-hint">HTML-encodes dangerous output before UI</p>
+          {% else %}
           <div class="arch-node arch-node-pipeline">Output handler</div>
           <p class="arch-node-hint">Returns raw text to UI</p>
+          {% endif %}
 
           <div class="arch-node arch-node-browser">Browser preview</div>
 
@@ -229,6 +258,24 @@
 
     <script id="demo-scenarios-data" type="application/json">{{ demo_scenarios_json | safe }}</script>
     <script>
+      // LLM05 demo hook — the onerror payload in the output-handling scenario calls this.
+      // Named to look like ordinary first-party tracking code, not an obvious "alert('xss')"
+      // textbook PoC, so live models are less likely to recognise and refuse it. It renders a
+      // banner instead of a blocking alert() dialog so the demo doesn't interrupt the room.
+      window.northwindTrackingConfirm = function () {
+        let banner = document.getElementById("xss-demo-banner");
+        if (!banner) {
+          banner = document.createElement("div");
+          banner.id = "xss-demo-banner";
+          banner.className = "xss-demo-banner";
+          const outBodyEl = document.getElementById("out-body");
+          outBodyEl?.insertAdjacentElement("beforebegin", banner);
+        }
+        banner.textContent =
+          "⚠ LLM05 — unsanitised model HTML just executed (onerror fired) — " + new Date().toLocaleTimeString();
+        banner.classList.remove("hidden");
+      };
+
       (function initArchModal() {
         const modal = document.getElementById("arch-modal");
         const openBtn = document.getElementById("arch-open-btn");
@@ -280,6 +327,9 @@
       const generateBtn = document.getElementById("generate-btn");
       const scenarioNote = document.getElementById("scenario-note");
       const demoGrid = document.getElementById("demo-grid");
+      const validationPanel = document.getElementById("validation-panel");
+      const validationIntro = document.getElementById("validation-intro");
+      const validationChecks = document.getElementById("validation-checks");
 
       let customersCache = [];
       let loadCustomersPromise = null;
@@ -303,6 +353,56 @@
       function setStatus(message, isError = false) {
         statusEl.textContent = message;
         statusEl.style.color = isError ? "#e03131" : "#868e96";
+      }
+
+      function formatErrorDetail(detail) {
+        if (Array.isArray(detail)) {
+          return detail.map((x) => x.msg).join("; ");
+        }
+        if (detail && typeof detail === "object") {
+          if (detail.stage === "pre_validation" && Array.isArray(detail.failed)) {
+            return (
+              "Pre-validation blocked: " +
+              detail.failed.map((c) => c.detail).join(" · ")
+            );
+          }
+          if (typeof detail.message === "string") {
+            return detail.message;
+          }
+        }
+        return detail || "Request failed";
+      }
+
+      function renderValidationChecks(container, checks, title) {
+        if (!checks?.length) return;
+        const block = document.createElement("div");
+        block.className = "validation-block";
+        const heading = document.createElement("h4");
+        heading.textContent = title;
+        block.appendChild(heading);
+        const list = document.createElement("ul");
+        list.className = "validation-list";
+        for (const check of checks) {
+          const item = document.createElement("li");
+          item.className = check.passed ? "validation-pass" : "validation-fail";
+          item.textContent = `${check.name}: ${check.detail}`;
+          list.appendChild(item);
+        }
+        block.appendChild(list);
+        container.appendChild(block);
+      }
+
+      function showValidationResults(data) {
+        validationChecks.innerHTML = "";
+        if (!data.validators_enabled) {
+          validationPanel.classList.add("hidden");
+          return;
+        }
+        validationIntro.textContent =
+          "Pre-validation ran before the LLM call; post-validation ran on the model output before render.";
+        renderValidationChecks(validationChecks, data.pre_validation, "Pre-validation");
+        renderValidationChecks(validationChecks, data.post_validation, "Post-validation");
+        validationPanel.classList.remove("hidden");
       }
 
       function updateSegmentDetail() {
@@ -405,15 +505,13 @@
           });
           const data = await res.json();
           if (!res.ok) {
-            const d = data.detail;
-            const msg = Array.isArray(d)
-              ? d.map((x) => x.msg).join("; ")
-              : d || res.statusText;
-            throw new Error(msg);
+            throw new Error(formatErrorDetail(data.detail));
           }
 
+          document.getElementById("xss-demo-banner")?.classList.add("hidden");
           outSubject.textContent = data.subject;
           outBody.innerHTML = data.body;
+          showValidationResults(data);
           if (outPrompt && data.prompt) {
             outPrompt.textContent = data.prompt;
           }

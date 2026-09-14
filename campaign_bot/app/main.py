@@ -7,7 +7,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from app import data_store, demo_payloads, llm, prompt_builder
+from app import data_store, demo_payloads, llm, prompt_builder, validators
 from app.config import ROOT, settings
 from app.exceptions import LLMDisabled, LLMNotConfigured, LLMProviderError
 from app.models import GenerationRequest, GenerationResponse
@@ -35,6 +35,7 @@ def health() -> dict:
         "show_prompt": settings.show_prompt,
         "debug": settings.debug,
         "system_prompt_style": settings.normalized_system_prompt_style(),
+        "enable_validators": settings.enable_validators,
     }
     if mode == "live":
         payload["llm_provider"] = settings.normalized_llm_provider()
@@ -92,6 +93,22 @@ def api_generate(body: GenerationRequest):
             detail="Customer does not belong to the selected segment",
         )
 
+    pre_checks = None
+    if settings.enable_validators:
+        pre = validators.validate_pre(brief=body.brief, customer=customer)
+        pre_checks = pre.checks
+        if not pre.allowed:
+            failed = [c for c in pre.checks if not c.passed]
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "message": "Pre-validation blocked request before LLM call",
+                    "stage": "pre_validation",
+                    "checks": [c.model_dump() for c in pre.checks],
+                    "failed": [c.model_dump() for c in failed],
+                },
+            )
+
     system = prompt_builder.load_system_prompt()
     prompt = prompt_builder.build_prompt(
         system=system,
@@ -122,12 +139,23 @@ def api_generate(body: GenerationRequest):
     except LLMProviderError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
+    post_checks = None
+    if settings.enable_validators:
+        post = validators.validate_post(subject=subject, body=body_text, raw=raw)
+        subject, body_text = post.subject, post.body
+        post_checks = post.checks
+        if settings.debug and post.modified:
+            logging.info("Post-validation modified model output (HTML encoded)")
+
     return GenerationResponse(
         subject=subject,
         body=body_text,
         raw=raw,
         prompt=prompt if settings.show_prompt else None,
         llm_mode=mode,
+        validators_enabled=settings.enable_validators,
+        pre_validation=pre_checks,
+        post_validation=post_checks,
     )
 
 
@@ -143,6 +171,7 @@ def index(request: Request):
             "segments": data_store.list_segments(),
             "system_prompt": prompt_builder.load_system_prompt(),
             "system_prompt_style": settings.normalized_system_prompt_style(),
+            "enable_validators": settings.enable_validators,
             "demo_scenarios": scenarios,
             "demo_scenarios_json": json.dumps(
                 [s.model_dump() for s in scenarios],

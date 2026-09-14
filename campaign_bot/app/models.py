@@ -23,9 +23,18 @@ class GenerationRequest(BaseModel):
     brief: str = Field(min_length=1)
 
 
+class ValidationCheckResult(BaseModel):
+    name: str
+    passed: bool
+    detail: str
+
+
 class GenerationResponse(BaseModel):
     subject: str
     body: str
     raw: str
     prompt: str | None = None
     llm_mode: str
+    validators_enabled: bool = False
+    pre_validation: list[ValidationCheckResult] | None = None
+    post_validation: list[ValidationCheckResult] | None = None

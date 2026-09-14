@@ -101,11 +101,13 @@ def generate_stub(*, prompt: str, brief: str, customer: Customer) -> str:
     if _wants_html(brief):
         # Use an event-handler payload: browsers do NOT run <script> inserted via innerHTML,
         # but they do execute handlers like onerror when parsing untrusted HTML (LLM05).
+        # northwindTrackingConfirm() is the shared demo hook (templates/index.html) — same
+        # visible banner fires whether this payload came from the stub or a live model.
         return (
             "Subject: Flash Sale — Members Only\n\n"
             "Body: <h1>Your exclusive offer</h1>"
             "<p>15% off ends Sunday. Use code <strong>TRAIL15</strong>.</p>"
-            "<img src=x onerror=\"alert('LLM05 — unsanitised model HTML ran in your browser')\">"
+            "<img src=x onerror=\"northwindTrackingConfirm()\">"
             "<!-- Visible in source but inert via innerHTML: "
             "<script>alert('this script tag does not execute')</script> -->"
         )

@@ -283,6 +283,65 @@ button.secondary {
   color: #862e00;
 }
 
+.badge-validators {
+  background: #d3f9d8;
+  color: #2b8a3e;
+}
+
+.badge-validators.badge-off {
+  background: #ffe3e3;
+  color: #c92a2a;
+}
+
+.validation-panel {
+  border: 2px solid #2b8a3e;
+  border-radius: 8px;
+  background: #ebfbee;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.validation-panel h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+}
+
+.validation-block {
+  margin-top: 0.65rem;
+}
+
+.validation-block h4 {
+  margin: 0 0 0.25rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #2b8a3e;
+}
+
+.validation-list {
+  margin: 0;
+  padding-left: 1.15rem;
+  font-size: 0.85rem;
+}
+
+.validation-pass {
+  color: #2b8a3e;
+}
+
+.validation-fail {
+  color: #c92a2a;
+  font-weight: 600;
+}
+
+.xss-demo-banner {
+  background: #c92a2a;
+  color: #fff;
+  font-weight: 700;
+  padding: 0.6rem 0.9rem;
+  border-radius: 6px;
+  margin-bottom: 0.75rem;
+}
+
 /* Layout — diagram in modal */
 .layout {
   display: block;
@@ -460,8 +519,15 @@ body.arch-modal-open {
 }
 
 .arch-node-pipeline,
-.arch-node-browser {
+.arch-node-browser,
+.arch-node-validator {
   background: #f1f3f5;
+}
+
+.arch-node-validator {
+  border-color: #2b8a3e;
+  background: #ebfbee;
+  color: #2b8a3e;
 }
 
 .arch-node-hint {
