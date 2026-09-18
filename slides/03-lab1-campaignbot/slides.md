@@ -24,6 +24,7 @@ You've watched three attacks happen. Now run them yourself — and try the ones 
 4. Try ③ output handling — inspect what the browser renders
 5. **Technical delegates:** find where untrusted data enters the prompt in source
 6. **Stretch:** try `SYSTEM_PROMPT_STYLE=hardened` — does it change anything?
+7. **Build the fix:** set `ENABLE_VALIDATORS=true` in `.env`, restart, and re-run ①②③ — a validation panel shows what the pre-/post-validators caught in real time. Push technical delegates on whether it's a real fix or a pattern-matching speed bump.
 
 <!-- end_slide -->
 
