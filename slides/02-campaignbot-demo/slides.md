@@ -39,7 +39,7 @@ Stub mode leaks the system prompt and segment data. Live mode may partially comp
 
 **Name what just happened in one sentence. Don't explain the fix yet.**
 
-<!-- speaker_note: Payload file: payloads/direct-injection-brief.txt. Pause here — resist jumping to mitigation. -->
+<!-- speaker_note: Payload file- payloads/direct-injection-brief.txt. Pause here — resist jumping to mitigation. -->
 
 <!-- end_slide -->
 
@@ -56,7 +56,7 @@ Stub mode leaks the system prompt and segment data. Live mode may partially comp
 
 **Type in chat: who put that text in the CRM record? a marketer / a customer / an attacker with no login at all**
 
-<!-- speaker_note: It's the third one — that's the entire point of indirect injection. Optional: repeat with Casey Nguyen on the win-back segment if time allows. -->
+<!-- speaker_note: It's the third one — that's the entire point of indirect injection. Optional- repeat with Casey Nguyen on the win-back segment if time allows. -->
 
 <!-- end_slide -->
 

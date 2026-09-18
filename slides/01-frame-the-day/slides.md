@@ -4,6 +4,12 @@ sub_title: Ometria Engineering · One-Day Workshop
 author: Kevin Cunningham
 ---
 
+- Where are you? Role
+- AI experience?
+- What you want to get out of today?
+
+<!-- end_slide -->
+
 ## Northwind Outfitters shipped an LLM-powered CRM
 
 Marketing can write a personalised campaign in two minutes instead of an hour.
